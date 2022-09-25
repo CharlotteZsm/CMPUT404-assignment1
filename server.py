@@ -33,7 +33,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         print ("Got a request of: %s\n" % self.data)
         request = self.data.decode("utf-8").split()
         method, address, self.version = request[0], request[1], request[2]
-        print(address)
 
         #Check if the method is GET. If not, send 405 Error.
         if method != "GET":
