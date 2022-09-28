@@ -77,7 +77,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         if content == None:
             response = self.Error404()
             return response
-        response = self.version+" 200 OK\r\n"+"Content-Type: text/"+type+"\n"+content
+        response = self.version+" 200 OK\r\n"+"Content-Type: text/"+type+"\r\n\n"+content
         return response
     def Get_content(self, url):
         try:
