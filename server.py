@@ -31,8 +31,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        request = self.data.decode("utf-8").split()
-        method, address, self.version = request[0], request[1], request[2]
+        info = self.data.decode("utf-8").split()
+        method, address, self.version = info[0], info[1], info[2]
 
         #Check if the method is GET. If not, send 405 Error.
         if method != "GET":
@@ -40,13 +40,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
         else:
             url = "www"+address
             if address[-1] == "/":
-                url = url+"index.html"
+                url += "index.html"
                 response = self.OK200("html", url)
             else:
                 url_split = url.split('.')
                 if len(url_split) == 1:
-                    url = url + "/index.html"
-                    response = self.OK200("html", url)
+                    path = address+"/"
+                    url += "/index.html"
+                    response = self.Error301(url,path)
                 elif len(url_split) == 2:
                     type = url_split[1]
                     if (type !='css' and type != 'html'):
@@ -59,21 +60,33 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.request.sendall(bytearray(response,'utf-8'))
 
     def Error405(self):
-        response = self.version+" 405 Method Not Allowed\r\n"
+        response = self.version+" 405 Method Not Allowed\r\n"+"Content-Type: text/html\n"
         return response
     def Error404(self):
         response = self.version+" 404 Not Found\r\n"+"Content-Type: text/html\n"
         return response
+    def Error301(self,url,path):
+        content = self.Get_content(url)
+        if content == None:
+            response = self.Error404()
+            return response
+        response = self.version+" 301 Moved Permanently\r\n"+"Content-Type: text/html\n"+"Location: "+path+"\n"+content
+        return response
     def OK200(self,type,url):
+        content = self.Get_content(url)
+        if content == None:
+            response = self.Error404()
+            return response
+        response = self.version+" 200 OK\r\n"+"Content-Type: text/"+type+"\n"+content
+        return response
+    def Get_content(self, url):
         try:
             f = open(url, "r")
         except:
-            response = self.Error404()
-            return response
+            return None
         content = f.read()
         f.close()
-        response = self.version+" 200 OK\r\n"+"Content-Type: text/"+type+"\n"+content
-        return response
+        return content
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
 
